@@ -1,20 +1,19 @@
-const hostname = '127.0.0.1';
-const port = 3000;
+require('dotenv').config()
+var restify = require('restify')
 
-const server = require('./controller.js');
-
-var options = {
-    headers: {
-        'X-Vault-Token': process.env.token,
-        'Content-Type': 'application/json'
-    },
-    uri: process.env.uriEncrypt,
-    method: 'POST',
-    json: {
-      "plaintext": Buffer.from("my secret data").toString('base64')
-    }
-};
-
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+var service = require('./service')
+ 
+const server = restify.createServer({
+  name: 'VaultBatch',
+  version: '1.0.0'
+})
+ 
+server.use(restify.plugins.acceptParser(server.acceptable));
+server.use(restify.plugins.queryParser());
+server.use(restify.plugins.bodyParser());
+ 
+server.post('/encrypt', service.encryptRequest);
+ 
+server.listen(3000, function () {
+  console.log('%s listening at %s', server.name, server.url);
 });

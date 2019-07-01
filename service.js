@@ -1,38 +1,30 @@
-require('dotenv').config();
 var request = require('request');
-
-const url= require('url');
-
 var data = {};
 
-exports.encryptRequest = function (req, res) {
-    items = '';
-
-    req.on('data', function(chunk) {
-        items = JSON.parse(chunk);
-        mapItems(items);
-    });
-
-    req.on('end', function() {
-        setTimeout(function(){
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(data));
-        },3000);
+exports.encryptRequest = (req, res, next) => {
+    mapItems(req.body, function(data){
+        res.send(data);
+        next(); 
     });
 }
 
-mapItems = (items) => {
-    Object.keys(items).map(item => {
-        hashItem(items[item], function(result){
-            console.log(result);
+mapItems = (items, cb) => {
+    itemsA = Object.keys(items);
+    itemsA.map( (item, i) => {
+        hashItem(items[item], function(error, result){
+            if(error){
+                console.log(error);
+            }
+            console.log(result+ ' '+ item);
             data[item] = result;
+            if (itemsA.length === (i + 1)){
+                cb(data);
+            }
         });
     });
 };
 
 hashItem = (value, cb) => {
-    var hashed = '';
     var options = {
         headers: {
             'X-Vault-Token': process.env.token,
@@ -45,18 +37,6 @@ hashItem = (value, cb) => {
         }
     };
     request(options, function (error, res, body) {
-        if (error) {
-        console.log(error) // Print the shortened url.
-        }else{
-            if( body.errors ) {
-                console.log(body.errors);
-            } else {
-                console.log(body.data.errors);
-                hashed = body.data.ciphertext
-            }
-        }
+        cb(error, body.data.ciphertext);
     });
-    setTimeout(function(){
-      cb(hashed);
-    }, 2000);
 }
