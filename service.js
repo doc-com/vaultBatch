@@ -3,37 +3,36 @@ var request = require('request');
 
 const url= require('url');
 
-exports.encryptRequest = function (req, res, cb) {
-    body = '';
+var data = {};
+
+exports.encryptRequest = function (req, res) {
+    items = '';
+
     req.on('data', function(chunk) {
-        body = JSON.parse(chunk);
+        items = JSON.parse(chunk);
+        mapItems(items);
     });
 
     req.on('end', function() {
-
-        var data = {};
-
-        Object.keys(body).map(key => {
-            data[key] = body[key];
-        });
-
-        /* var response = {
-            "text": "Post Request Value is " + data
-        }; */
-
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(response));
+        setTimeout(function(){
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data));
+        },3000);
     });
 }
 
-exports.invalidRequest = function (req, res) {
-    res.statusCode = 404;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Invalid Request');
+mapItems = (items) => {
+    Object.keys(items).map(item => {
+        hashItem(items[item], function(result){
+            console.log(result);
+            data[item] = result;
+        });
+    });
 };
 
-hashValue = (value) => {
+hashItem = (value, cb) => {
+    var hashed = '';
     var options = {
         headers: {
             'X-Vault-Token': process.env.token,
@@ -45,7 +44,6 @@ hashValue = (value) => {
           "plaintext": Buffer.from(value).toString('base64')
         }
     };
-
     request(options, function (error, res, body) {
         if (error) {
         console.log(error) // Print the shortened url.
@@ -53,9 +51,12 @@ hashValue = (value) => {
             if( body.errors ) {
                 console.log(body.errors);
             } else {
-                console.log(body.data.ciphertext);
-                return body.data.ciphertext;
+                console.log(body.data.errors);
+                hashed = body.data.ciphertext
             }
         }
     });
+    setTimeout(function(){
+      cb(hashed);
+    }, 2000);
 }
