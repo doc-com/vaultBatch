@@ -27,10 +27,10 @@ mapItems = (items, cb) => {
 hashItem = (value, cb) => {
     var options = {
         headers: {
-            'X-Vault-Token': process.env.token,
+            'X-Vault-Token': process.env.VAULT_TOKEN,
             'Content-Type': 'application/json'
         },
-        uri: process.env.uriEncrypt,
+        uri: process.env.VAULT_HOST,
         method: 'POST',
         json: {
           "plaintext": Buffer.from(value).toString('base64')
