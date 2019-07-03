@@ -15,9 +15,8 @@ mapItems = (items, cb) => {
             if(error){
                 console.log(error);
             }
-            console.log(result+ ' '+ item);
             data[item] = result;
-            if (itemsA.length === (i + 1)){
+            if (Object.keys(data).length === itemsA.length){
                 cb(data);
             }
         });
