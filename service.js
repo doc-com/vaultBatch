@@ -1,12 +1,10 @@
 var request = require('request');
-var data = [];
-var response = {};
 
 exports.encryptRequest = (req, res, next) => {
     let type = req.params.type;
-    mapItems(req.body, function(data){
+    mapItems(req.body, type, function(data){
         hashData(data, type, function(err,data){
-            mapResponse(req.body, data, function(response){
+            mapResponse(req.body, data, type, function(response){
                 res.send(response);
                 next();
             });
@@ -14,12 +12,19 @@ exports.encryptRequest = (req, res, next) => {
     });
 }
 
-mapItems = (items, cb) => {
+mapItems = (items, type, cb) => {
+    var data = [];
     itemsA = Object.keys(items);
     itemsA.map( item => {
-        data.push({
-            "plaintext": Buffer.from(items[item]).toString('base64')
-        })
+        if ( type === 'encrypt' ) {
+            data.push({
+                "plaintext": Buffer.from(items[item]).toString('base64')
+            });
+        } else {
+            data.push({
+                "ciphertext": items[item]
+            });
+        }
         if (data.length === itemsA.length){
             cb(data);
         }
@@ -43,9 +48,10 @@ hashData = (data, type, cb) => {
     });
 }
 
-mapResponse = (body, data, cb) => {
+mapResponse = (body, data, type, cb) => {
+    var response = {};
     Object.keys(body).map( (item, i) => {
-        response[item] = data.batch_results[i].ciphertext;
+        response[item] = type === 'encrypt' ? data.batch_results[i].ciphertext : Buffer.from(data.batch_results[i].plaintext, 'base64').toString('ascii');
         if (Object.keys(response).length === Object.keys(body).length){
             cb(response);
         }
